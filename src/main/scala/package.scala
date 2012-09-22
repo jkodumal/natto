@@ -95,4 +95,113 @@ package object natto {
     def ferment(s: Set[T]) = new SoyListData((s map (natto(_))).asJava)    
   }
 
+
+  // type-level witness demonstrating that L is a record (hlist of field, data tuples)
+  trait IsRecord[L <: HList]
+
+  implicit object hnilIsRecord extends IsRecord[HNil]
+
+  implicit def hlistIsRecord[D, F <: Field[D], T <: HList](implicit irt: IsRecord[T]) = new IsRecord[(F, D) :: T]{}
+
+  def isRecord[L <: HList](l: L)(implicit rec: IsRecord[L]){}
+
+  /*
+  Cute, but not necessary. The tuple should be converted at the HList level
+  implicit def fieldTupleRecIso[D, F <: Field[D], R](implicit dri : RecIso[D, R]) = new RecIso[(F, D),(F, R)] {
+    def iso(d: (F, D)) = (d._1, dri.iso(d._2))
+  }
+  */
+
+  // Recursively transform a record
+  /*
+  implicit def hlRecordIso[D, F <: Field[D], T <: HList, R, S <: HList](implicit dri: RecIso[D, R], lri: RecIso[T, S]) = new RecIso[(F,D) :: T, (F, R) :: S] {
+    def iso(a : (F, D) :: T): (F, R) :: S = (a.head._1, dri.iso(a.head._2)) :: lri.iso(a.tail)
+  }
+  */
+
+  trait RecIso[T, R] {
+    def iso(t: T) : R
+  }
+
+  trait RecId[T] extends RecIso[T, T] {
+    def iso(t: T) : T = t
+  }
+
+  implicit object intRecIso extends RecId[Int]
+  implicit object stringRecIso extends RecId[String]
+  implicit object longRecIso extends RecId[Long]
+  implicit object hnilRecIso extends RecId[HNil]
+
+  // Recursively transform any hlist
+  implicit def hlRecIso[D, T <: HList, R, S <: HList](implicit dri: RecIso[D, R], lri : RecIso[T, S]) = new RecIso[D :: T, R :: S] {
+    def iso(a: D :: T): R :: S = dri.iso(a.head) :: lri.iso(a.tail)
+  }
+
+  // Recursively transform a case class with an isomorphism into an hlist
+  implicit def ccRecIso[C <: Product, L <: HList, R <: HList](implicit is: HListIso[C, L], hlri: RecIso[L, R]) = new RecIso[C, R] { 
+    import HListIso._
+    def iso(c: C) = hlri.iso(toHList(c))
+  }
+
+  def makeIso[T, R](d: T)(implicit dri: RecIso[T, R]): R = dri.iso(d)
+
+  /*
+  type Address = FieldEntry[street.type] :: FieldEntry[city.type] :: HNil
+
+  object street extends Field[String] {override def toString = "street"}
+  object city extends Field[String] {override def toString = "city" }
+
+  object firstName extends Field[String] { override def toString = "firstName" }
+  object lastName extends Field[String] { override def toString = "lastName" }
+  object id extends Field[Long] {override def toString = "id" }
+  object address extends Field[Address] {override def toString = "address" }
+
+  type Person = FieldEntry[firstName.type] :: FieldEntry[lastName.type] :: FieldEntry[id.type] :: FieldEntry[address.type] :: HNil
+
+
+  val johnDoeAddress : Address =
+    (street -> "elm") ::
+      (city -> "springfield") ::
+      HNil
+
+  val johnDoeRecord : Person =
+    (firstName -> "John") ::
+      (lastName -> "Doe") ::
+      (id -> 12L) ::
+      (address -> johnDoeAddress) ::
+      HNil
+
+  isRecord(HNil: HNil)
+
+  isRecord(johnDoeRecord)
+  isRecord(johnDoeAddress)
+
+  println(nattoMap(johnDoeRecord))
+  println(nattoMap(johnDoeAddress))
+*/
+
+
+
+  /*
+    // A pair of arbitrary case classes, one nested
+  case class Foo(i : Int, s : String)
+  case class Bar(s : String, f: Foo)
+
+  // Publish their `HListIso`'s
+  implicit def fooIso = HListIso(Foo.apply _, Foo.unapply _)
+  implicit def barIso = HListIso(Bar.apply _, Bar.unapply _)
+
+  type FooHList = Int :: String :: HNil
+  type BarHList = String :: FooHList :: HNil
+
+
+  val foo = Foo(1, "foo")
+  val bar = Bar("bar", foo)
+
+  // Yields a FooHList
+  makeIso(foo)
+
+  // Yields a BarHList
+  makeIso[Bar, BarHList](bar) // you have to help out scala's type inference in this case
+  */
 }

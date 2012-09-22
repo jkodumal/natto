@@ -16,7 +16,7 @@ javacOptions ++= Seq("-Xlint:unchecked", "-Xlint:deprecation")
 
 //dependencies
 libraryDependencies ++= Seq (
-  "com.chuusai" %% "shapeless" % "1.2.0",
+  "com.chuusai" %% "shapeless" % "1.2.2",
   "org.scalacheck" %% "scalacheck" % "1.9" % "test",
   "org.specs2" %% "specs2" % "1.10" % "test"
 )

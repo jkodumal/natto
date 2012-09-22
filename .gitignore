@@ -6,7 +6,8 @@
 *.class
 out
 err
-
+.idea/
+.idea_modules/
 target/
 lib_managed/
 src_managed/
