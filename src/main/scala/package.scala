@@ -103,21 +103,7 @@ package object natto {
 
   implicit def hlistIsRecord[D, F <: Field[D], T <: HList](implicit irt: IsRecord[T]) = new IsRecord[(F, D) :: T]{}
 
-  def isRecord[L <: HList](l: L)(implicit rec: IsRecord[L]){}
-
-  /*
-  Cute, but not necessary. The tuple should be converted at the HList level
-  implicit def fieldTupleRecIso[D, F <: Field[D], R](implicit dri : RecIso[D, R]) = new RecIso[(F, D),(F, R)] {
-    def iso(d: (F, D)) = (d._1, dri.iso(d._2))
-  }
-  */
-
-  // Recursively transform a record
-  /*
-  implicit def hlRecordIso[D, F <: Field[D], T <: HList, R, S <: HList](implicit dri: RecIso[D, R], lri: RecIso[T, S]) = new RecIso[(F,D) :: T, (F, R) :: S] {
-    def iso(a : (F, D) :: T): (F, R) :: S = (a.head._1, dri.iso(a.head._2)) :: lri.iso(a.tail)
-  }
-  */
+  def isRecord[L <: HList](l: L)(implicit rec: IsRecord[L]) = true
 
   trait RecIso[T, R] {
     def iso(t: T) : R
@@ -136,6 +122,11 @@ package object natto {
   implicit def hlRecIso[D, T <: HList, R, S <: HList](implicit dri: RecIso[D, R], lri : RecIso[T, S]) = new RecIso[D :: T, R :: S] {
     def iso(a: D :: T): R :: S = dri.iso(a.head) :: lri.iso(a.tail)
   }
+
+  // Recursively transform a record
+  implicit def hlRecordIso[D, F <: Field[D], T <: HList, R, S <: HList](implicit dri: RecIso[D, R], lri: RecIso[T, S]) = new RecIso[(F,D) :: T, (F, R) :: S] {
+    def iso(a : (F, D) :: T): (F, R) :: S = (a.head._1, dri.iso(a.head._2)) :: lri.iso(a.tail)
+  }    
 
   // Recursively transform a case class with an isomorphism into an hlist
   implicit def ccRecIso[C <: Product, L <: HList, R <: HList](implicit is: HListIso[C, L], hlri: RecIso[L, R]) = new RecIso[C, R] { 
