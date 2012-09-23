@@ -40,8 +40,8 @@ class NattoTest extends Specification {
 
 
   val johnDoeAddress : Address =
-    (street -> "elm") ::
-      (city -> "springfield") ::
+    (street -> "Elm") ::
+      (city -> "Springfield") ::
       HNil
 
   val johnDoeRecord : Person =
@@ -51,13 +51,29 @@ class NattoTest extends Specification {
       (address -> johnDoeAddress) ::
       HNil
 
+  // The fact that these compile is witness to their correctness
   isRecord(HNil: HNil)
-
   isRecord(johnDoeRecord)
   isRecord(johnDoeAddress)
 
-  nattoMap(johnDoeRecord)
-  nattoMap(johnDoeAddress)
+  "The soy data for John Doe" should {
+    val soy = nattoMap(johnDoeRecord)
+    
+    "have firstName John" in {
+      soy.get("firstName").stringValue === "John"
+    }
 
+    "have lastName Doe" in {
+      soy.get("lastName").stringValue === "Doe"
+    }
 
+    "have address.street Elm" in {
+      soy.get("address.street").stringValue === "Elm"
+    }
+
+    "have address.city Springfield" in {
+      soy.get("address.city").stringValue === "Springfield"
+    }
+
+  }
 }
