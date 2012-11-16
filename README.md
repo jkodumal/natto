@@ -31,3 +31,5 @@ What's the state of the code?
 The code is not ready for production. I still do not have a clean solution for generating case class to `HList` mappings automatically, nor have I even begun to think about performance.
 
 That said, take a peek at the tests for the current state of what natto looks like to clients. If you're willing to replace your case classes with shapeless records, then you don't need to wait for a solution to the case class to `HList` mapping problem--- natto already gives you boilerplate-free record to Soy conversion.
+
+----
